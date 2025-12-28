@@ -104,3 +104,12 @@ POST /api/game/{id}/end-turn
 - All game logic will be handled exclusively in the backend
 - The frontend will only display game state and available actions
 - EF Core will be used with SQL Express during development
+
+
+## Diagrams
+### Class diagram
+![Diagrama de clases](docs/images/class-diagram.png)
+
+### Sequential diagram
+![Diagrama de clases](docs/images/sequential-diagram.png)
+
