@@ -1,13 +1,15 @@
-# monopoly-game
-API and Client
+# Monopoly Game – Backend-driven Web Application
 
 ## Description
 This project consists of the development of a Monopoly-like game
-implemented through a REST API built with ASP.NET Core and Entity Framework.
-The frontend will be developed using React and will consume the API.
+implemented as a backend-driven application.
+
+The game logic is fully handled by a REST API built with ASP.NET Core
+and Entity Framework Core. The frontend, developed with React and TypeScript,
+is responsible only for rendering the game state and sending player actions.
 
 The main goal of this project is to practice backend architecture,
-business logic implementation, and proper frontend/backend separation.
+domain-driven design, and proper frontend/backend separation.
 
 ---
 
@@ -30,12 +32,12 @@ business logic implementation, and proper frontend/backend separation.
 
 ### Included
 - Games with 2 to 4 players
-- Turn-based gameplay with random turn order
+- Turn-based gameplay
 - Dice-based movement
 - Property purchasing
 - Rent payment
 - Jail mechanics
-- Special Tiles
+- Special tiles (Go, Jail, Free Parking, etc.)
 
 ### Not included (for now)
 - Auctions
@@ -47,6 +49,7 @@ business logic implementation, and proper frontend/backend separation.
 
 ## Game Rules
 
+- All rules are enforced by the backend
 - Each player starts with $1500
 - On their turn, a player rolls the dice
 - If a player lands on an unowned property, they may purchase it
@@ -57,13 +60,15 @@ business logic implementation, and proper frontend/backend separation.
 
 ## Domain Model
 
+## Domain Model
+
 - Game
 - Player
 - Board
 - Tile
 - Property
-- DiceRoll
 - Turn
+- DiceRoll
 
 ---
 
@@ -76,10 +81,11 @@ business logic implementation, and proper frontend/backend separation.
 - Buy property
 - End turn
 - Leave jail
+- View game state
 
 ---
 
-## API (Draft)
+## API (Draft – Subject to change)
 
 POST /api/game  
 POST /api/game/{id}/join  
@@ -91,10 +97,11 @@ POST /api/game/{id}/end-turn
 
 ## Roadmap
 
-- [ ] Define domain model
-- [ ] Create backend base
-- [ ] Implement game logic
+- [x] Define domain model and diagrams
+- [ ] Create backend base project
 - [ ] Design API contract
+- [ ] Implement core game logic
+- [ ] Persist game state with EF Core
 - [ ] Build React frontend
 
 ---
@@ -110,6 +117,9 @@ POST /api/game/{id}/end-turn
 ### Class diagram
 ![Diagrama de clases](docs/images/class-diagram.png)
 
-### Sequential diagram
+### Sequence     diagram
 ![Diagrama de clases](docs/images/sequential-diagram.png)
+
+### MER diagram
+![Diagrama de Modelo Entidad Relación](docs/images/MER.png)
 
