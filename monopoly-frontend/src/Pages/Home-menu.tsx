@@ -4,8 +4,7 @@ export function HomeMenu() {
   const [hoveredButton, setHoveredButton] = useState<string | null>(null)
 
   const menuItems = [
-    { id: "play", label: "JUGAR", icon: "▶", route:"/play" },
-    { id: "join", label: "UNIRSE", icon: "◆", route:"/play" },
+    { id: "play", label: "JUGAR", icon: "▶", route:"/new-game" },
     { id: "how", label: "CÓMO JUGAR", icon: "?", route:"/how" },
     { id: "options", label: "OPCIONES", icon: "⚙", route:"/play" },
   ]

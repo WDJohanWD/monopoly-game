@@ -1,10 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 
-interface HowToPlayProps {
-  onBack: () => void
-}
-
 const instructions = [
   {
     title: "OBJETIVO",
@@ -26,7 +22,7 @@ const instructions = [
   },
 ]
 
-export function HowToPlay({ onBack }: HowToPlayProps) {
+export function HowToPlay() {
   const [hoveredBack, setHoveredBack] = useState(false)
 
   return (
@@ -49,7 +45,6 @@ export function HowToPlay({ onBack }: HowToPlayProps) {
 
       {/* Back button */}
       <Link to="/"
-        onClick={onBack}
         onMouseEnter={() => setHoveredBack(true)}
         onMouseLeave={() => setHoveredBack(false)}
         className={`
