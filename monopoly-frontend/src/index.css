@@ -44,7 +44,7 @@
   --menu-subtitle: oklch(0.75 0.02 90);
   --menu-card: oklch(0.98 0.01 90);
   --menu-border: oklch(0.25 0.08 145);
-  --menu-dots: oklch(0.25 0.08 30);
+  --menu-dots: oklch(1 0.08 30);
   --menu-button: oklch(0.92 0.03 85);
   --menu-button-hover: oklch(0.75 0.18 85);
   --menu-button-text: oklch(0.2 0.05 30);
