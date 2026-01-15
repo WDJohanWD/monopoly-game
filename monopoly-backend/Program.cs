@@ -1,6 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using monopoly_backend.Data;
+using monopoly_backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 🔹 Controllers
+builder.Services.AddControllers();
 
 // 🔹 Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -12,6 +17,20 @@ builder.Services.AddDbContext<MonopolyDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")
     ));
 
+// 🔹 Services
+builder.Services.AddScoped<IGameService, GameService>();
+
+// 🔹 CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -22,28 +41,10 @@ if (app.Environment.IsDevelopment())
 
 // app.UseHttpsRedirection();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var summaries = new[]
-    {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild",
-        "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-    };
+app.UseCors("AllowReactApp");
 
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast(
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
+app.UseAuthorization();
 
-    return forecast;
-});
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
