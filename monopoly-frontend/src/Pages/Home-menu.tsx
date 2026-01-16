@@ -1,12 +1,14 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import dice from "../assets/dados.webp"
+
 export function HomeMenu() {
   const [hoveredButton, setHoveredButton] = useState<string | null>(null)
 
   const menuItems = [
-    { id: "play", label: "JUGAR", icon: "▶", route:"/new-game" },
-    { id: "how", label: "CÓMO JUGAR", icon: "?", route:"/how" },
-    { id: "options", label: "OPCIONES", icon: "⚙", route:"/play" },
+    { id: "play", label: "JUGAR", icon: "▶", route: "/new-game" },
+    { id: "how", label: "CÓMO JUGAR", icon: "?", route: "/how" },
+    { id: "options", label: "OPCIONES", icon: "⚙", route: "/options" },
   ]
 
   return (
@@ -21,10 +23,17 @@ export function HomeMenu() {
       <div className="flex flex-col items-center gap-8 z-10">
         {/* Logo */}
         <div className="text-center mb-4">
-          <h1 className="font-mono text-5xl md:text-7xl font-bold text-menu-title tracking-wider mb-2 drop-shadow-[4px_4px_0px_rgba(0,0,0,0.3)]">
-            MONOPOOLY
-          </h1>
+          <div className="flex">
+            <img src={dice} alt="dice image" className="max-w-20" />
+            <h1 className="font-mono text-5xl md:text-7xl font-bold text-menu-title tracking-wider mb-2 drop-shadow-[4px_4px_0px_rgba(0,0,0,0.3)]">
+              MONOPOOLY
+            </h1>
+            <img src={dice} alt="dice image" className="max-w-20 rotate-y-180" />
+          </div>
+
+
           <div className="flex items-center justify-center gap-2">
+
             <span className="w-12 h-1 bg-menu-accent" />
             <span className="font-mono text-sm text-menu-subtitle tracking-widest">EL JUEGO DE MESA</span>
             <span className="w-12 h-1 bg-menu-accent" />
@@ -32,28 +41,7 @@ export function HomeMenu() {
         </div>
 
         {/* Dice decoration */}
-        <div className="flex gap-4 mb-4">
-          <div className="w-12 h-12 bg-menu-card rounded-lg border-4 border-menu-border flex items-center justify-center shadow-[4px_4px_0px_rgba(0,0,0,0.2)]">
-            <div className="grid grid-cols-2 gap-1">
-              <span className="w-2 h-2 bg-menu-dots rounded-full" />
-              <span className="w-2 h-2 bg-menu-dots rounded-full" />
-              <span className="w-2 h-2 bg-menu-dots rounded-full" />
-              <span className="w-2 h-2 bg-menu-dots rounded-full" />
-            </div>
-          </div>
-          <div className="w-12 h-12 bg-menu-card rounded-lg border-4 border-menu-border flex items-center justify-center shadow-[4px_4px_0px_rgba(0,0,0,0.2)]">
-            <div className="grid grid-cols-3 gap-0.5">
-              <span className="w-2 h-2 bg-menu-dots rounded-full" />
-              <span className="w-2 h-2 bg-transparent" />
-              <span className="w-2 h-2 bg-menu-dots rounded-full" />
-              <span className="w-2 h-2 bg-transparent" />
-              <span className="w-2 h-2 bg-menu-dots rounded-full" />
-              <span className="w-2 h-2 bg-transparent" />
-              <span className="w-2 h-2 bg-menu-dots rounded-full" />
-              <span className="w-2 h-2 bg-transparent" />
-              <span className="w-2 h-2 bg-menu-dots rounded-full" />
-            </div>
-          </div>
+        <div className="flex gap-4">
         </div>
 
         {/* Menu buttons */}
@@ -68,10 +56,9 @@ export function HomeMenu() {
                   relative w-full font-mono text-lg font-bold py-4 px-6 
                   bg-menu-button border-4 border-menu-border
                   transition-all duration-150 ease-out
-                  ${
-                    hoveredButton === item.id
-                      ? "translate-x-1 -translate-y-1 shadow-[6px_6px_0px_rgba(0,0,0,0.3)] bg-menu-button-hover text-menu-button-text-hover"
-                      : "shadow-[4px_4px_0px_rgba(0,0,0,0.2)] text-menu-button-text"
+                  ${hoveredButton === item.id
+                    ? "translate-x-1 -translate-y-1 shadow-[6px_6px_0px_rgba(0,0,0,0.3)] bg-menu-button-hover text-menu-button-text-hover"
+                    : "shadow-[4px_4px_0px_rgba(0,0,0,0.2)] text-menu-button-text"
                   }
                 `}
               >
