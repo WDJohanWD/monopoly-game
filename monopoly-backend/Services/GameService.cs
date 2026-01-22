@@ -17,50 +17,101 @@ namespace monopoly_backend.Services
 
         public async Task<ApiResponse<GameDto>> CreateGameAsync(CreateGameDto createGameDto)
         {
-            if (createGameDto.Players.Count < 2 || createGameDto.Players.Count > 4)
+            try
             {
-                return ApiResponse<GameDto>.Error("El juego debe tener entre 2 y 4 jugadores");
+                if (createGameDto.Players.Count < 2 || createGameDto.Players.Count > 4)
+                {
+                    return ApiResponse<GameDto>.Error("El juego debe tener entre 2 y 4 jugadores");
+                }
+
+                var game = new Game
+                {
+                    Id = Guid.NewGuid(),
+                    Status = GameStatus.Waiting,
+                    CreatedAt = DateTime.UtcNow,
+                    Round = 0
+                };
+
+                // Crear el tablero con las casillas estándar y propiedades
+                var board = CreateStandardBoard(game.Id);
+                game.Board = board;
+
+                // Guardar el Game con el Board, Tiles y Properties en cascada
+                _context.Games.Add(game);
+                await _context.SaveChangesAsync();
+
+                // Crear los jugadores
+                var players = createGameDto.Players.Select((p, index) => new Player
+                {
+                    Id = Guid.NewGuid(),
+                    Name = p.Name,
+                    Color = p.Color,
+                    Money = createGameDto.StartingMoney,
+                    Position = 0,
+                    Status = PlayerStatus.Active,
+                    GameId = game.Id,
+                    TurnsInJail = 0
+                }).ToList();
+
+                _context.Players.AddRange(players);
+                await _context.SaveChangesAsync();
+
+                // Actualizar Game con CurrentTurnPlayerId y cambiar status
+                game.CurrentTurnPlayerId = players.First().Id;
+                game.Status = GameStatus.InProgress;
+                game.StartedAt = DateTime.UtcNow;
+                _context.Games.Update(game);
+                await _context.SaveChangesAsync();
+
+                // Obtener datos mapeados directamente sin queries complejas
+                var gameDto = new GameDto
+                {
+                    Id = game.Id,
+                    Status = game.Status,
+                    CreatedAt = game.CreatedAt,
+                    StartedAt = game.StartedAt,
+                    Round = game.Round,
+                    CurrentTurnPlayerId = game.CurrentTurnPlayerId,
+                    Players = players.Select(p => new PlayerDto
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        Color = p.Color,
+                        Money = p.Money,
+                        Position = p.Position,
+                        Status = p.Status,
+                        TurnsInJail = p.TurnsInJail,
+                        Properties = new List<PropertyDto>()
+                    }).ToList(),
+                    Board = new BoardDto
+                    {
+                        Id = board.Id,
+                        Tiles = board.Tiles.Select(t => new TileDto
+                        {
+                            Id = t.Id,
+                            Name = t.Name,
+                            Type = t.Type,
+                            Position = t.Position,
+                            Property = t.Property != null ? new PropertyDto
+                            {
+                                Id = t.Property.Id,
+                                Name = t.Property.Name,
+                                Price = t.Property.Price,
+                                Rent = t.Property.Rent,
+                                ColorGroup = t.Property.ColorGroup,
+                                OwnerId = null,
+                                OwnerName = null
+                            } : null
+                        }).ToList()
+                    }
+                };
+
+                return ApiResponse<GameDto>.Ok(gameDto, "Juego creado exitosamente");
             }
-
-            var game = new Game
+            catch (Exception ex)
             {
-                Id = Guid.NewGuid(),
-                Status = GameStatus.Waiting,
-                CreatedAt = DateTime.UtcNow,
-                Round = 0
-            };
-
-            // Crear el tablero con las casillas estándar y propiedades
-            var board = CreateStandardBoard(game.Id);
-            game.Board = board;
-
-            // Guardar el Game con el Board, Tiles y Properties en cascada
-            // Entity Framework guardará todo automáticamente debido a las relaciones configuradas
-            _context.Games.Add(game);
-            await _context.SaveChangesAsync();
-
-            // Ahora crear los jugadores con el GameId ya guardado
-            var players = createGameDto.Players.Select((p, index) => new Player
-            {
-                Id = Guid.NewGuid(),
-                Name = p.Name,
-                Color = p.Color,
-                Money = createGameDto.StartingMoney,
-                Position = 0,
-                Status = PlayerStatus.Active,
-                GameId = game.Id,
-                TurnsInJail = 0
-            }).ToList();
-
-            _context.Players.AddRange(players);
-            await _context.SaveChangesAsync();
-
-            // Ahora actualizar el Game con el CurrentTurnPlayerId
-            game.CurrentTurnPlayerId = players.First().Id;
-            await _context.SaveChangesAsync();
-
-            var gameDto = await MapToGameDtoAsync(game.Id);
-            return ApiResponse<GameDto>.Ok(gameDto, "Juego creado exitosamente");
+                return ApiResponse<GameDto>.Error($"Error al crear juego: {ex.Message}");
+            }
         }
 
         public async Task<ApiResponse<GameDto>> JoinGameAsync(Guid gameId, JoinGameDto joinGameDto)
@@ -147,11 +198,8 @@ namespace monopoly_backend.Services
         {
             var game = await _context.Games
                 .Include(g => g.Players)
-                    .ThenInclude(p => p.Properties)
-                .Include(g => g.Board)
-                    .ThenInclude(b => b!.Tiles)
-                        .ThenInclude(t => t.Property)
                 .Include(g => g.CurrentTurnPlayer)
+                .Include(g => g.Board)
                 .FirstOrDefaultAsync(g => g.Id == gameId);
 
             if (game == null)

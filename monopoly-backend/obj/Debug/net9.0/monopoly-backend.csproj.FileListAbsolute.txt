@@ -154,3 +154,12 @@ C:\Users\Johan\Documents\REPOSITORIES\monopoly-game\monopoly-backend\obj\Debug\n
 C:\Users\Johan\Documents\REPOSITORIES\monopoly-game\monopoly-backend\obj\Debug\net9.0\monopoly-backend.pdb
 C:\Users\Johan\Documents\REPOSITORIES\monopoly-game\monopoly-backend\obj\Debug\net9.0\monopoly-backend.genruntimeconfig.cache
 C:\Users\Johan\Documents\REPOSITORIES\monopoly-game\monopoly-backend\obj\Debug\net9.0\ref\monopoly-backend.dll
+C:\Users\Johan\Documents\REPOSITORIES\monopoly-game\monopoly-backend\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.InMemory.dll
+C:\Users\Johan\Documents\REPOSITORIES\monopoly-game\monopoly-backend\bin\Debug\net9.0\Microsoft.Extensions.Caching.Abstractions.dll
+C:\Users\Johan\Documents\REPOSITORIES\monopoly-game\monopoly-backend\bin\Debug\net9.0\Microsoft.Extensions.Caching.Memory.dll
+C:\Users\Johan\Documents\REPOSITORIES\monopoly-game\monopoly-backend\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.dll
+C:\Users\Johan\Documents\REPOSITORIES\monopoly-game\monopoly-backend\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\Johan\Documents\REPOSITORIES\monopoly-game\monopoly-backend\bin\Debug\net9.0\Microsoft.Extensions.Logging.dll
+C:\Users\Johan\Documents\REPOSITORIES\monopoly-game\monopoly-backend\bin\Debug\net9.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\Johan\Documents\REPOSITORIES\monopoly-game\monopoly-backend\bin\Debug\net9.0\Microsoft.Extensions.Options.dll
+C:\Users\Johan\Documents\REPOSITORIES\monopoly-game\monopoly-backend\bin\Debug\net9.0\Microsoft.Extensions.Primitives.dll

@@ -11,11 +11,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 🔹 EF Core + SQL Server
+// 🔹 EF Core + SQL Server / In-Memory for Development
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<MonopolyDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    ));
+{
+    // Use in-memory database for development (temporary data)
+    options.UseInMemoryDatabase("MonopolyDb");
+});
 
 // 🔹 Services
 builder.Services.AddScoped<IGameService, GameService>();

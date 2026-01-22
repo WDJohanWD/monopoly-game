@@ -1,3 +1,12 @@
+import type { 
+  GameDto, 
+  PlayerDto, 
+  PropertyDto, 
+  TileDto, 
+  BoardDto,
+  DiceRollResponse 
+} from '../types/game.types';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5093/api';
 
 export interface CreateGameRequest {
@@ -8,51 +17,29 @@ export interface CreateGameRequest {
   startingMoney: number;
 }
 
-export interface PropertyDto {
-  id: string;
-  name: string;
-  price: number;
-  rent: number;
-  colorGroup?: string;
-  ownerId?: string;
-  ownerName?: string;
-}
-
-export interface TileDto {
-  id: number;
-  name: string;
-  type: number; // TileType enum from backend
-  position: number;
-  property?: PropertyDto;
-}
-
-export interface BoardDto {
-  id: string;
-  tiles: TileDto[];
-}
-
-export interface PlayerDto {
-  id: string;
-  name: string;
-  money: number;
-  position: number;
-  color: string;
-  status: string;
-  turnsInJail: number;
-  properties: PropertyDto[];
-}
-
 export interface GameResponse {
   success: boolean;
-  data?: {
-    id: string;
-    status: string;
-    players: PlayerDto[];
-    board?: BoardDto;
-  };
+  data?: GameDto;
   message?: string;
   errors?: string[];
 }
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  errors?: string[];
+}
+
+// Re-export tipos desde game.types
+export type { 
+  GameDto, 
+  PlayerDto, 
+  PropertyDto, 
+  TileDto, 
+  BoardDto,
+  DiceRollResponse 
+};
 
 export async function createGame(request: CreateGameRequest): Promise<GameResponse> {
   try {
@@ -154,6 +141,152 @@ export async function getGame(gameId: string): Promise<GameResponse> {
       return {
         success: false,
         message: data.message || 'Error al obtener el juego',
+        errors: data.errors,
+      };
+    }
+
+    return {
+      success: true,
+      data: data.data,
+      message: data.message,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Error de conexión',
+    };
+  }
+}
+
+// Función para unir un jugador al juego
+export async function joinGame(gameId: string, playerName: string): Promise<GameResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/game/${gameId}/join`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ playerName }),
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.message || 'Error al unirse al juego',
+        errors: data.errors,
+      };
+    }
+
+    return {
+      success: true,
+      data: data.data,
+      message: data.message,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Error de conexión',
+    };
+  }
+}
+
+// Función para lanzar dados
+export async function rollDice(gameId: string, playerId: string): Promise<ApiResponse<DiceRollResponse>> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/game/${gameId}/roll?playerId=${playerId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.message || 'Error al lanzar dados',
+        errors: data.errors,
+      };
+    }
+
+    return {
+      success: true,
+      data: data.data,
+      message: data.message,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Error de conexión',
+    };
+  }
+}
+
+// Función para comprar una propiedad
+export interface BuyPropertyRequest {
+  propertyId: string;
+}
+
+export async function buyProperty(
+  gameId: string, 
+  playerId: string, 
+  buyPropertyDto: BuyPropertyRequest
+): Promise<GameResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/game/${gameId}/buy?playerId=${playerId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(buyPropertyDto),
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.message || 'Error al comprar propiedad',
+        errors: data.errors,
+      };
+    }
+
+    return {
+      success: true,
+      data: data.data,
+      message: data.message,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Error de conexión',
+    };
+  }
+}
+
+// Función para terminar turno
+export async function endTurn(gameId: string, playerId: string): Promise<GameResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/game/${gameId}/end-turn?playerId=${playerId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.message || 'Error al terminar turno',
         errors: data.errors,
       };
     }
