@@ -101,6 +101,24 @@ namespace monopoly_backend.Controllers
         }
 
         /// <summary>
+        /// Paga la fianza para salir de la cárcel
+        /// </summary>
+        [HttpPost("{id}/pay-jail-fine")]
+        public async Task<ActionResult<ApiResponse<GameDto>>> PayJailFine(
+            Guid id, 
+            [FromQuery] Guid playerId)
+        {
+            var result = await _gameService.PayJailFineAsync(id, playerId);
+            
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Termina el turno del jugador actual
         /// </summary>
         [HttpPost("{id}/end-turn")]

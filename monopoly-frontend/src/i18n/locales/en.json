@@ -1,0 +1,77 @@
+{
+  "menu": {
+    "title": "MONOPOOLY",
+    "subtitle": "THE BOARD GAME",
+    "play": "PLAY",
+    "howToPlay": "HOW TO PLAY",
+    "options": "OPTIONS",
+    "version": "v1.0 • 2-4 PLAYERS"
+  },
+  "options": {
+    "title": "OPTIONS",
+    "language": "LANGUAGE",
+    "colorTheme": "Color Theme",
+    "back": "BACK",
+    "languages": {
+      "es": "ESP",
+      "en": "ENG"
+    },
+    "themes": {
+      "light": "LIGHT",
+      "dark": "DARK"
+    }
+  },
+  "howToPlay": {
+    "title": "HOW TO PLAY",
+    "back": "BACK",
+    "instructions": {
+      "objective": {
+        "title": "OBJECTIVE",
+        "description": "Be the richest player at the end of the game by buying properties and collecting rent."
+      },
+      "turn": {
+        "title": "TURN",
+        "description": "Roll the dice and move your token. Buy free properties or pay rent if they have an owner."
+      },
+      "properties": {
+        "title": "PROPERTIES",
+        "description": "Buy all properties of a color to build houses and hotels."
+      },
+      "cards": {
+        "title": "CARDS",
+        "description": "Land on Chance or Community Chest to receive cards with special effects."
+      },
+      "jail": {
+        "title": "JAIL",
+        "description": "Go to jail if you roll doubles 3 times or land on the space. Pay or roll doubles to get out."
+      },
+      "bankruptcy": {
+        "title": "BANKRUPTCY",
+        "description": "If you can't pay, sell properties. With nothing to sell, you're eliminated."
+      }
+    }
+  },
+  "newGame": {
+    "title": "NEW GAME",
+    "players": "PLAYERS",
+    "player": "PLAYER",
+    "namePlaceholder": "Name...",
+    "startingMoney": "STARTING MONEY",
+    "back": "BACK",
+    "create": "CREATE",
+    "creating": "CREATING...",
+    "errors": {
+      "invalidPlayers": "All players must have a name"
+    },
+    "colors": {
+      "red": "Red",
+      "blue": "Blue",
+      "green": "Green",
+      "yellow": "Yellow",
+      "orange": "Orange",
+      "purple": "Purple",
+      "pink": "Pink",
+      "cyan": "Cyan"
+    }
+  }
+}

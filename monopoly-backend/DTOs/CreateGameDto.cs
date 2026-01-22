@@ -8,6 +8,10 @@ namespace monopoly_backend.DTOs
         [MinLength(2)]
         [MaxLength(4)]
         public List<CreatePlayerDto> Players { get; set; } = new();
+        
+        [Required]
+        [Range(500, 10000)]
+        public int StartingMoney { get; set; } = 1500;
     }
     
     public class CreatePlayerDto

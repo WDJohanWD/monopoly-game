@@ -9,6 +9,7 @@ namespace monopoly_backend.Services
         Task<ApiResponse<GameDto>> GetGameAsync(Guid gameId);
         Task<ApiResponse<RollDiceResponseDto>> RollDiceAsync(Guid gameId, Guid playerId);
         Task<ApiResponse<GameDto>> BuyPropertyAsync(Guid gameId, Guid playerId, BuyPropertyDto buyPropertyDto);
+        Task<ApiResponse<GameDto>> PayJailFineAsync(Guid gameId, Guid playerId);
         Task<ApiResponse<GameDto>> EndTurnAsync(Guid gameId, Guid playerId);
     }
 }

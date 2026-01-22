@@ -9,7 +9,7 @@ namespace monopoly_backend.Models.Entities
         public string? ColorGroup { get; set; }
         
         // Navigation properties
-        public int TileId { get; set; }
+        public Guid TileId { get; set; }
         public Tile Tile { get; set; } = null!;
         public Guid? OwnerId { get; set; }
         public Player? Owner { get; set; }

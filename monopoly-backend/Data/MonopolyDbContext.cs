@@ -40,7 +40,7 @@ namespace monopoly_backend.Data
                 entity.HasOne(e => e.Board)
                     .WithOne(b => b.Game)
                     .HasForeignKey<Board>(b => b.GameId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.NoAction);
             });
 
             // Player configuration

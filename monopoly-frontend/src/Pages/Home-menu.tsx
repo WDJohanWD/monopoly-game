@@ -1,14 +1,16 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import dice from "../assets/dados.webp"
 
 export function HomeMenu() {
+  const { t } = useTranslation()
   const [hoveredButton, setHoveredButton] = useState<string | null>(null)
 
   const menuItems = [
-    { id: "play", label: "JUGAR", icon: "▶", route: "/new-game" },
-    { id: "how", label: "CÓMO JUGAR", icon: "?", route: "/how" },
-    { id: "options", label: "OPCIONES", icon: "⚙", route: "/options" },
+    { id: "play", label: t("menu.play"), icon: "▶", route: "/new-game" },
+    { id: "how", label: t("menu.howToPlay"), icon: "?", route: "/how" },
+    { id: "options", label: t("menu.options"), icon: "⚙", route: "/options" },
   ]
 
   return (
@@ -26,7 +28,7 @@ export function HomeMenu() {
           <div className="flex">
             <img src={dice} alt="dice image" className="max-w-20" />
             <h1 className="font-mono text-5xl md:text-7xl font-bold text-menu-title tracking-wider mb-2 drop-shadow-[4px_4px_0px_rgba(0,0,0,0.3)]">
-              MONOPOOLY
+              {t("menu.title")}
             </h1>
             <img src={dice} alt="dice image" className="max-w-20 rotate-y-180" />
           </div>
@@ -35,7 +37,7 @@ export function HomeMenu() {
           <div className="flex items-center justify-center gap-2">
 
             <span className="w-12 h-1 bg-menu-accent" />
-            <span className="font-mono text-sm text-menu-subtitle tracking-widest">EL JUEGO DE MESA</span>
+            <span className="font-mono text-sm text-menu-subtitle tracking-widest">{t("menu.subtitle")}</span>
             <span className="w-12 h-1 bg-menu-accent" />
           </div>
         </div>
@@ -73,7 +75,7 @@ export function HomeMenu() {
 
         {/* Footer */}
         <footer className="mt-8 text-center">
-          <p className="font-mono text-xs text-menu-subtitle tracking-wider">v1.0 • 2-4 JUGADORES</p>
+          <p className="font-mono text-xs text-menu-subtitle tracking-wider">{t("menu.version")}</p>
         </footer>
       </div>
 

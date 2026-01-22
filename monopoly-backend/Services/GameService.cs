@@ -30,26 +30,33 @@ namespace monopoly_backend.Services
                 Round = 0
             };
 
+            // Crear el tablero con las casillas estándar y propiedades
+            var board = CreateStandardBoard(game.Id);
+            game.Board = board;
+
+            // Guardar el Game con el Board, Tiles y Properties en cascada
+            // Entity Framework guardará todo automáticamente debido a las relaciones configuradas
+            _context.Games.Add(game);
+            await _context.SaveChangesAsync();
+
+            // Ahora crear los jugadores con el GameId ya guardado
             var players = createGameDto.Players.Select((p, index) => new Player
             {
                 Id = Guid.NewGuid(),
                 Name = p.Name,
                 Color = p.Color,
-                Money = 1500,
+                Money = createGameDto.StartingMoney,
                 Position = 0,
                 Status = PlayerStatus.Active,
                 GameId = game.Id,
                 TurnsInJail = 0
             }).ToList();
 
-            game.Players = players;
+            _context.Players.AddRange(players);
+            await _context.SaveChangesAsync();
+
+            // Ahora actualizar el Game con el CurrentTurnPlayerId
             game.CurrentTurnPlayerId = players.First().Id;
-
-            // Crear el tablero con las casillas estándar
-            var board = CreateStandardBoard(game.Id);
-            game.Board = board;
-
-            _context.Games.Add(game);
             await _context.SaveChangesAsync();
 
             var gameDto = await MapToGameDtoAsync(game.Id);
@@ -74,7 +81,7 @@ namespace monopoly_backend.Services
 
             if (game.Players.Count >= 4)
             {
-                return ApiResponse<GameDto>.Error("El juego ya tiene el máximo de jugadores");
+                return ApiResponse<GameDto>.Error("El juego ya tiene el mรกximo de jugadores");
             }
 
             if (game.Players.Any(p => p.Name == joinGameDto.Name || p.Color == joinGameDto.Color))
@@ -96,7 +103,7 @@ namespace monopoly_backend.Services
 
             game.Players.Add(player);
 
-            // Si es el segundo jugador y hay 2 o más, comenzar el juego
+            // Si es el segundo jugador y hay 2 o mรกs, comenzar el juego
             if (game.Players.Count >= 2 && game.Status == GameStatus.Waiting)
             {
                 game.Status = GameStatus.InProgress;
@@ -159,7 +166,7 @@ namespace monopoly_backend.Services
 
             if (game.Status != GameStatus.InProgress)
             {
-                return ApiResponse<RollDiceResponseDto>.Error("El juego no está en progreso");
+                return ApiResponse<RollDiceResponseDto>.Error("El juego no estรก en progreso");
             }
 
             if (game.CurrentTurnPlayerId != playerId)
@@ -175,7 +182,7 @@ namespace monopoly_backend.Services
 
             if (player.Status == PlayerStatus.Bankrupt)
             {
-                return ApiResponse<RollDiceResponseDto>.Error("El jugador está en bancarrota");
+                return ApiResponse<RollDiceResponseDto>.Error("El jugador estรก en bancarrota");
             }
 
             var random = new Random();
@@ -204,14 +211,106 @@ namespace monopoly_backend.Services
 
             turn.DiceRoll = diceRoll;
 
-            // Mover al jugador
-            var newPosition = (player.Position + total) % 40;
-            player.Position = newPosition;
+            // Verificar si el jugador está en la cárcel
+            bool isInJail = player.Status == PlayerStatus.InJail;
+            bool canMoveFromJail = false;
 
-            // Verificar si pasó por Go
-            if (player.Position < player.Position - total || (player.Position - total) < 0)
+            if (isInJail)
             {
-                player.Money += 200;
+                // Si saca dobles, puede salir de la cárcel
+                if (die1 == die2)
+                {
+                    player.Status = PlayerStatus.Active;
+                    player.TurnsInJail = 0;
+                    canMoveFromJail = true;
+                }
+                else
+                {
+                    player.TurnsInJail++;
+                    // Si lleva 3 turnos en la cárcel, debe pagar o salir automáticamente
+                    if (player.TurnsInJail >= 3)
+                    {
+                        if (player.Money >= 50)
+                        {
+                            player.Money -= 50;
+                            player.Status = PlayerStatus.Active;
+                            player.TurnsInJail = 0;
+                            canMoveFromJail = true;
+                        }
+                        else
+                        {
+                            // No tiene dinero, queda en bancarrota
+                            player.Status = PlayerStatus.Bankrupt;
+                        }
+                    }
+                    else
+                    {
+                        // No puede moverse, termina el turno
+                        _context.Turns.Add(turn);
+                        await _context.SaveChangesAsync();
+                        return ApiResponse<RollDiceResponseDto>.Ok(new RollDiceResponseDto
+                        {
+                            DiceRoll = new DiceRollDto
+                            {
+                                Id = diceRoll.Id,
+                                Die1 = die1,
+                                Die2 = die2,
+                                Total = total,
+                                IsDouble = die1 == die2,
+                                RolledAt = diceRoll.RolledAt,
+                                TurnId = turn.Id
+                            },
+                            NewPosition = player.Position,
+                            CanBuyProperty = false,
+                            MustPayRent = false,
+                            LandedOnProperty = null
+                        });
+                    }
+                }
+            }
+
+            // Verificar si sacó 3 dobles consecutivos (ir a la cárcel)
+            // Necesitamos verificar los últimos 2 turnos del mismo jugador
+            var recentTurns = await _context.Turns
+                .Include(t => t.DiceRoll)
+                .Where(t => t.GameId == game.Id && t.PlayerId == playerId)
+                .OrderByDescending(t => t.StartedAt)
+                .Take(2)
+                .ToListAsync();
+
+            bool threeDoubles = die1 == die2 && 
+                                recentTurns.Count >= 2 &&
+                                recentTurns[0].DiceRoll != null && recentTurns[0].DiceRoll!.Die1 == recentTurns[0].DiceRoll!.Die2 &&
+                                recentTurns[1].DiceRoll != null && recentTurns[1].DiceRoll!.Die1 == recentTurns[1].DiceRoll!.Die2;
+
+            // Mover al jugador
+            int newPosition;
+            int oldPosition = player.Position;
+            
+            if (isInJail && !canMoveFromJail)
+            {
+                newPosition = player.Position; // Se queda en la cárcel
+            }
+            else if (threeDoubles)
+            {
+                // Ir a la cárcel por 3 dobles
+                newPosition = 10; // Posición de la cárcel
+                player.Position = newPosition;
+                player.Status = PlayerStatus.InJail;
+                player.TurnsInJail = 0;
+            }
+            else
+            {
+                newPosition = (player.Position + total) % 40;
+                
+                // Verificar si pasó por Go (posición 0)
+                // Si la posición anterior + total >= 40, entonces pasó por Go
+                if (oldPosition + total >= 40)
+                {
+                    player.Money += 200;
+                }
+                
+                player.Position = newPosition;
             }
 
             // Obtener la casilla donde aterrizó
@@ -220,27 +319,63 @@ namespace monopoly_backend.Services
 
             bool canBuyProperty = false;
             bool mustPayRent = false;
+            string? specialAction = null;
 
-            if (tile != null && tile.Type == TileType.Property && property != null)
+            if (tile != null)
             {
-                if (property.OwnerId == null)
+                // Manejar casillas especiales
+                switch (tile.Type)
                 {
-                    canBuyProperty = player.Money >= property.Price;
-                }
-                else if (property.OwnerId != playerId)
-                {
-                    mustPayRent = true;
-                    player.Money -= property.Rent;
-                    var owner = game.Players.FirstOrDefault(p => p.Id == property.OwnerId);
-                    if (owner != null)
-                    {
-                        owner.Money += property.Rent;
-                    }
+                    case TileType.GoToJail:
+                        newPosition = 10; // Ir a la cárcel
+                        player.Position = newPosition;
+                        player.Status = PlayerStatus.InJail;
+                        player.TurnsInJail = 0;
+                        specialAction = "GoToJail";
+                        break;
 
-                    if (player.Money < 0)
-                    {
-                        player.Status = PlayerStatus.Bankrupt;
-                    }
+                    case TileType.IncomeTax:
+                        int incomeTax = Math.Min(200, (int)(player.Money * 0.1));
+                        player.Money -= incomeTax;
+                        specialAction = $"IncomeTax:{incomeTax}";
+                        break;
+
+                    case TileType.LuxuryTax:
+                        player.Money -= 100;
+                        specialAction = "LuxuryTax:100";
+                        break;
+
+                    case TileType.FreeParking:
+                        specialAction = "FreeParking";
+                        break;
+
+                    case TileType.Property:
+                    case TileType.Railroad:
+                    case TileType.Utility:
+                        if (property != null)
+                        {
+                            if (property.OwnerId == null)
+                            {
+                                canBuyProperty = player.Money >= property.Price;
+                            }
+                            else if (property.OwnerId != playerId)
+                            {
+                                mustPayRent = true;
+                                int rent = CalculateRent(property, game.Players, total);
+                                player.Money -= rent;
+                                var owner = game.Players.FirstOrDefault(p => p.Id == property.OwnerId);
+                                if (owner != null)
+                                {
+                                    owner.Money += rent;
+                                }
+
+                                if (player.Money < 0)
+                                {
+                                    player.Status = PlayerStatus.Bankrupt;
+                                }
+                            }
+                        }
+                        break;
                 }
             }
 
@@ -262,6 +397,9 @@ namespace monopoly_backend.Services
                 NewPosition = newPosition,
                 CanBuyProperty = canBuyProperty,
                 MustPayRent = mustPayRent,
+                SpecialAction = specialAction,
+                IsInJail = player.Status == PlayerStatus.InJail,
+                TurnsInJail = player.TurnsInJail,
                 LandedOnProperty = property != null ? new PropertyDto
                 {
                     Id = property.Id,
@@ -314,12 +452,12 @@ namespace monopoly_backend.Services
 
             if (property.OwnerId != null)
             {
-                return ApiResponse<GameDto>.Error("La propiedad ya tiene dueño");
+                return ApiResponse<GameDto>.Error("La propiedad ya tiene dueรฑo");
             }
 
             if (player.Position != property.Tile.Position)
             {
-                return ApiResponse<GameDto>.Error("No estás en esta propiedad");
+                return ApiResponse<GameDto>.Error("No estรกs en esta propiedad");
             }
 
             if (player.Money < property.Price)
@@ -335,6 +473,43 @@ namespace monopoly_backend.Services
 
             var gameDto = await MapToGameDtoAsync(game.Id);
             return ApiResponse<GameDto>.Ok(gameDto, "Propiedad comprada exitosamente");
+        }
+
+        public async Task<ApiResponse<GameDto>> PayJailFineAsync(Guid gameId, Guid playerId)
+        {
+            var game = await _context.Games
+                .Include(g => g.Players)
+                .FirstOrDefaultAsync(g => g.Id == gameId);
+
+            if (game == null)
+            {
+                return ApiResponse<GameDto>.Error("Juego no encontrado");
+            }
+
+            var player = game.Players.FirstOrDefault(p => p.Id == playerId);
+            if (player == null)
+            {
+                return ApiResponse<GameDto>.Error("Jugador no encontrado");
+            }
+
+            if (player.Status != PlayerStatus.InJail)
+            {
+                return ApiResponse<GameDto>.Error("El jugador no está en la cárcel");
+            }
+
+            if (player.Money < 50)
+            {
+                return ApiResponse<GameDto>.Error("No tienes suficiente dinero para pagar la fianza (se necesitan $50)");
+            }
+
+            player.Money -= 50;
+            player.Status = PlayerStatus.Active;
+            player.TurnsInJail = 0;
+
+            await _context.SaveChangesAsync();
+
+            var gameDto = await MapToGameDtoAsync(game.Id);
+            return ApiResponse<GameDto>.Ok(gameDto, "Fianza pagada, has salido de la cárcel");
         }
 
         public async Task<ApiResponse<GameDto>> EndTurnAsync(Guid gameId, Guid playerId)
@@ -364,7 +539,7 @@ namespace monopoly_backend.Services
             game.CurrentTurnPlayerId = nextPlayer.Id;
             game.Round++;
 
-            // Verificar si el juego terminó (todos los jugadores excepto uno están en bancarrota)
+            // Verificar si el juego terminรณ (todos los jugadores excepto uno estรกn en bancarrota)
             var activePlayers = game.Players.Count(p => p.Status != PlayerStatus.Bankrupt);
             if (activePlayers <= 1)
             {
@@ -378,6 +553,39 @@ namespace monopoly_backend.Services
             return ApiResponse<GameDto>.Ok(gameDto);
         }
 
+        /// <summary>
+        /// Calcula el alquiler de una propiedad considerando ferrocarriles y servicios públicos
+        /// </summary>
+        private int CalculateRent(Property property, List<Player> players, int diceTotal)
+        {
+            var owner = players.FirstOrDefault(p => p.Id == property.OwnerId);
+            if (owner == null) return property.Rent;
+
+            // Para ferrocarriles: el alquiler depende de cuántos ferrocarriles tiene el dueño
+            if (property.ColorGroup == "Railroad")
+            {
+                var ownedRailroads = owner.Properties.Count(p => p.ColorGroup == "Railroad");
+                return ownedRailroads switch
+                {
+                    1 => 25,
+                    2 => 50,
+                    3 => 100,
+                    4 => 200,
+                    _ => 25
+                };
+            }
+
+            // Para servicios públicos: el alquiler es 4x o 10x el resultado de los dados
+            if (property.ColorGroup == "Utility")
+            {
+                var ownedUtilities = owner.Properties.Count(p => p.ColorGroup == "Utility");
+                return ownedUtilities == 1 ? diceTotal * 4 : diceTotal * 10;
+            }
+
+            // Para propiedades normales, usar el alquiler base
+            return property.Rent;
+        }
+
         private Board CreateStandardBoard(Guid gameId)
         {
             var board = new Board
@@ -387,68 +595,38 @@ namespace monopoly_backend.Services
                 Tiles = new List<Tile>()
             };
 
-            // Casillas estándar de Monopoly (versión simplificada)
-            var tiles = new List<(string Name, TileType Type, Property? Property)>
-            {
-                ("Go", TileType.Go, null),
-                ("Mediterranean Avenue", TileType.Property, new Property { Name = "Mediterranean Avenue", Price = 60, Rent = 2, ColorGroup = "Brown" }),
-                ("Community Chest", TileType.CommunityChest, null),
-                ("Baltic Avenue", TileType.Property, new Property { Name = "Baltic Avenue", Price = 60, Rent = 4, ColorGroup = "Brown" }),
-                ("Income Tax", TileType.IncomeTax, null),
-                ("Reading Railroad", TileType.Railroad, new Property { Name = "Reading Railroad", Price = 200, Rent = 25, ColorGroup = "Railroad" }),
-                ("Oriental Avenue", TileType.Property, new Property { Name = "Oriental Avenue", Price = 100, Rent = 6, ColorGroup = "Light Blue" }),
-                ("Chance", TileType.Chance, null),
-                ("Vermont Avenue", TileType.Property, new Property { Name = "Vermont Avenue", Price = 100, Rent = 6, ColorGroup = "Light Blue" }),
-                ("Connecticut Avenue", TileType.Property, new Property { Name = "Connecticut Avenue", Price = 120, Rent = 8, ColorGroup = "Light Blue" }),
-                ("Jail", TileType.Jail, null),
-                ("St. Charles Place", TileType.Property, new Property { Name = "St. Charles Place", Price = 140, Rent = 10, ColorGroup = "Pink" }),
-                ("Electric Company", TileType.Utility, new Property { Name = "Electric Company", Price = 150, Rent = 0, ColorGroup = "Utility" }),
-                ("States Avenue", TileType.Property, new Property { Name = "States Avenue", Price = 140, Rent = 10, ColorGroup = "Pink" }),
-                ("Virginia Avenue", TileType.Property, new Property { Name = "Virginia Avenue", Price = 160, Rent = 12, ColorGroup = "Pink" }),
-                ("Pennsylvania Railroad", TileType.Railroad, new Property { Name = "Pennsylvania Railroad", Price = 200, Rent = 25, ColorGroup = "Railroad" }),
-                ("St. James Place", TileType.Property, new Property { Name = "St. James Place", Price = 180, Rent = 14, ColorGroup = "Orange" }),
-                ("Community Chest", TileType.CommunityChest, null),
-                ("Tennessee Avenue", TileType.Property, new Property { Name = "Tennessee Avenue", Price = 180, Rent = 14, ColorGroup = "Orange" }),
-                ("New York Avenue", TileType.Property, new Property { Name = "New York Avenue", Price = 200, Rent = 16, ColorGroup = "Orange" }),
-                ("Free Parking", TileType.FreeParking, null),
-                ("Kentucky Avenue", TileType.Property, new Property { Name = "Kentucky Avenue", Price = 220, Rent = 18, ColorGroup = "Red" }),
-                ("Chance", TileType.Chance, null),
-                ("Indiana Avenue", TileType.Property, new Property { Name = "Indiana Avenue", Price = 220, Rent = 18, ColorGroup = "Red" }),
-                ("Illinois Avenue", TileType.Property, new Property { Name = "Illinois Avenue", Price = 240, Rent = 20, ColorGroup = "Red" }),
-                ("B&O Railroad", TileType.Railroad, new Property { Name = "B&O Railroad", Price = 200, Rent = 25, ColorGroup = "Railroad" }),
-                ("Atlantic Avenue", TileType.Property, new Property { Name = "Atlantic Avenue", Price = 260, Rent = 22, ColorGroup = "Yellow" }),
-                ("Ventnor Avenue", TileType.Property, new Property { Name = "Ventnor Avenue", Price = 260, Rent = 22, ColorGroup = "Yellow" }),
-                ("Water Works", TileType.Utility, new Property { Name = "Water Works", Price = 150, Rent = 0, ColorGroup = "Utility" }),
-                ("Marvin Gardens", TileType.Property, new Property { Name = "Marvin Gardens", Price = 280, Rent = 24, ColorGroup = "Yellow" }),
-                ("Go To Jail", TileType.GoToJail, null),
-                ("Pacific Avenue", TileType.Property, new Property { Name = "Pacific Avenue", Price = 300, Rent = 26, ColorGroup = "Green" }),
-                ("North Carolina Avenue", TileType.Property, new Property { Name = "North Carolina Avenue", Price = 300, Rent = 26, ColorGroup = "Green" }),
-                ("Community Chest", TileType.CommunityChest, null),
-                ("Pennsylvania Avenue", TileType.Property, new Property { Name = "Pennsylvania Avenue", Price = 320, Rent = 28, ColorGroup = "Green" }),
-                ("Short Line", TileType.Railroad, new Property { Name = "Short Line", Price = 200, Rent = 25, ColorGroup = "Railroad" }),
-                ("Chance", TileType.Chance, null),
-                ("Park Place", TileType.Property, new Property { Name = "Park Place", Price = 350, Rent = 35, ColorGroup = "Dark Blue" }),
-                ("Luxury Tax", TileType.LuxuryTax, null),
-                ("Boardwalk", TileType.Property, new Property { Name = "Boardwalk", Price = 400, Rent = 50, ColorGroup = "Dark Blue" })
-            };
+            // Obtener la definición del tablero estándar desde el servicio de plantilla
+            var boardTemplate = BoardTemplateService.GetStandardBoard();
 
-            for (int i = 0; i < tiles.Count; i++)
+            // Crear las casillas y propiedades basadas en la plantilla
+            for (int position = 0; position < boardTemplate.Count; position++)
             {
+                var tileDefinition = boardTemplate[position];
+                
                 var tile = new Tile
                 {
-                    Id = i,
-                    Name = tiles[i].Name,
-                    Type = tiles[i].Type,
-                    Position = i,
+                    Id = Guid.NewGuid(),
+                    Name = tileDefinition.Name,
+                    Type = tileDefinition.Type,
+                    Position = position,
                     BoardId = board.Id
                 };
 
-                var propertyData = tiles[i].Property;
-                if (propertyData != null)
+                // Si la casilla tiene una propiedad asociada, crearla
+                if (tileDefinition.Property != null)
                 {
-                    propertyData.Id = Guid.NewGuid();
-                    propertyData.TileId = i;
-                    tile.Property = propertyData;
+                    var property = new Property
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = tileDefinition.Property.Name,
+                        Price = tileDefinition.Property.Price,
+                        Rent = tileDefinition.Property.Rent,
+                        ColorGroup = tileDefinition.Property.ColorGroup,
+                        Tile = tile,
+                        OwnerId = null // Las propiedades empiezan sin dueño
+                    };
+                    
+                    tile.Property = property;
                 }
 
                 board.Tiles.Add(tile);

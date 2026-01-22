@@ -1,44 +1,41 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
-
-// interface OptionsProps {
-//   onBack: () => void
-// }
+import { useTranslation } from "react-i18next"
+import { useSettings } from "../contexts/SettingsContext"
 
 export function Options() {
+    const { t } = useTranslation()
+    const { language, theme, setLanguage, setTheme } = useSettings()
     const [hoveredButton, setHoveredButton] = useState<string | null>(null)
-    const [language, setLanguage] = useState("es")
-    const [animationSpeed, setAnimationSpeed] = useState("normal")
 
     const languages = [
-        { id: "es", label: "ESP" },
-        { id: "en", label: "ENG" },
-        { id: "pt", label: "POR" },
+        { id: "es" as const, label: t("options.languages.es") },
+        { id: "en" as const, label: t("options.languages.en") },
     ]
 
-    const speeds = [
-        { id: "slow", label: "LENTA" },
-        { id: "normal", label: "NORMAL" },
-        { id: "fast", label: "RÁPIDA" },
+    const themes = [
+        { id: "light" as const, label: t("options.themes.light") },
+        { id: "dark" as const, label: t("options.themes.dark") },
     ]
 
     return (
-        <div className="min-h-screen bg-menu flex flex-col justify-center items-center gap-6 max-w-lg mx-auto p-4 overflow-hidden">
+        <div className="min-h-screen bg-menu flex flex-col max-w-lg mx-auto p-4 overflow-hidden relative">
             <div className="absolute top-4 left-4 w-8 h-8 border-t-4 border-l-4 border-menu-accent" />
             <div className="absolute top-4 right-4 w-8 h-8 border-t-4 border-r-4 border-menu-accent" />
             <div className="absolute bottom-4 left-4 w-8 h-8 border-b-4 border-l-4 border-menu-accent" />
             <div className="absolute bottom-4 right-4 w-8 h-8 border-b-4 border-r-4 border-menu-accent" />
 
             {/* Title */}
-            <div className="text-center mb-2">
-                <h1 className="font-mono text-4xl font-bold text-menu-accent drop-shadow-[2px_2px_0px_rgba(0,0,0,0.3)]">OPCIONES</h1>
+            <div className="text-center mb-4 mt-4 flex-shrink-0">
+                <h1 className="font-mono text-4xl font-bold text-menu-accent drop-shadow-[2px_2px_0px_rgba(0,0,0,0.3)]">{t("options.title")}</h1>
                 <div className="h-1 w-32 bg-menu-accent mx-auto mt-2" />
             </div>
 
-            <div className="w-full max-w-lg space-y-3 max-h-[80vh] overflow-y-auto px-2">
+            {/* Scrollable content area */}
+            <div className="flex-1 w-full space-y-3 overflow-y-auto px-2 mb-4">
                 {/* Language */}
                 <div className="bg-menu-card border-4 border-menu-border p-4 shadow-[4px_4px_0px_rgba(0,0,0,0.2)]">
-                    <h3 className="font-mono text-sm font-bold text-menu-accent mb-3">IDIOMA</h3>
+                    <h3 className="font-mono text-sm font-bold text-menu-accent mb-3">{t("options.language")}</h3>
                     <div className="flex gap-2 justify-center">
                         {languages.map((lang) => (
                             <button
@@ -60,31 +57,31 @@ export function Options() {
 
                 {/* Color theme */}
                 <div className="bg-menu-card border-4 border-menu-border p-4 shadow-[4px_4px_0px_rgba(0,0,0,0.2)]">
-                    <h3 className="font-mono text-sm font-bold text-menu-accent mb-3">VELOCIDAD ANIMACIONES</h3>
+                    <h3 className="font-mono text-sm font-bold text-menu-accent mb-3">{t("options.colorTheme")}</h3>
                     <div className="flex gap-2 justify-center">
-                        {speeds.map((speed) => (
+                        {themes.map((themeOption) => (
                             <button
-                                key={speed.id}
-                                onClick={() => setAnimationSpeed(speed.id)}
+                                key={themeOption.id}
+                                onClick={() => setTheme(themeOption.id)}
                                 className={`
                 font-mono text-xs font-bold px-3 py-2 border-4 transition-all duration-150
-                ${animationSpeed === speed.id
+                ${theme === themeOption.id
                                         ? "bg-menu-accent border-menu-border shadow-[2px_2px_0px_rgba(0,0,0,0.3)]"
                                         : "bg-menu-card border-menu-border text-menu-button-text hover:bg-menu-button-hover"
                                     }
               `}
                             >
-                                {speed.label}
+                                {themeOption.label}
                             </button>
                         ))}
                     </div>
                 </div>
+            </div>
 
-                {/* Back button */}
+            {/* Back button - fixed at bottom */}
+            <div className="w-full flex-shrink-0 pb-4">
                 <Link to="/">
-
                     <button
-                        //onClick={onBack}
                         onMouseEnter={() => setHoveredButton("back")}
                         onMouseLeave={() => setHoveredButton(null)}
                         className={`
@@ -97,10 +94,11 @@ export function Options() {
                             }
                         `}
                     >
-                        VOLVER
+                        {t("options.back")}
                     </button>
                 </Link>
             </div>
+
             {/* Background pattern */}
             <div className="absolute inset-0 opacity-5 pointer-events-none">
                 <div

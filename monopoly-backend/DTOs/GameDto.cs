@@ -35,7 +35,7 @@ namespace monopoly_backend.DTOs
     
     public class TileDto
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string Name { get; set; } = null!;
         public TileType Type { get; set; }
         public int Position { get; set; }

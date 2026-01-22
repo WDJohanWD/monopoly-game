@@ -18,5 +18,8 @@ namespace monopoly_backend.DTOs
         public bool CanBuyProperty { get; set; }
         public bool MustPayRent { get; set; }
         public PropertyDto? LandedOnProperty { get; set; }
+        public string? SpecialAction { get; set; } // "GoToJail", "IncomeTax:200", "LuxuryTax:100", "FreeParking"
+        public bool IsInJail { get; set; }
+        public int TurnsInJail { get; set; }
     }
 }

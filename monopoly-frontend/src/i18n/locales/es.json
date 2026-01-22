@@ -1,0 +1,77 @@
+{
+  "menu": {
+    "title": "MONOPOOLY",
+    "subtitle": "EL JUEGO DE MESA",
+    "play": "JUGAR",
+    "howToPlay": "CÓMO JUGAR",
+    "options": "OPCIONES",
+    "version": "v1.0 • 2-4 JUGADORES"
+  },
+  "options": {
+    "title": "OPCIONES",
+    "language": "IDIOMA",
+    "colorTheme": "Tema de color",
+    "back": "VOLVER",
+    "languages": {
+      "es": "ESP",
+      "en": "ENG"
+    },
+    "themes": {
+      "light": "BLANCO",
+      "dark": "OSCURO"
+    }
+  },
+  "howToPlay": {
+    "title": "CÓMO JUGAR",
+    "back": "VOLVER",
+    "instructions": {
+      "objective": {
+        "title": "OBJETIVO",
+        "description": "Ser el jugador más rico al final de la partida, comprando propiedades y cobrando alquiler."
+      },
+      "turn": {
+        "title": "TURNO",
+        "description": "Lanza los dados y mueve tu ficha. Compra propiedades libres o paga alquiler si tienen dueño."
+      },
+      "properties": {
+        "title": "PROPIEDADES",
+        "description": "Compra todas las propiedades de un color para construir casas y hoteles."
+      },
+      "cards": {
+        "title": "CARTAS",
+        "description": "Cae en Suerte o Arca Comunal para recibir cartas con efectos especiales."
+      },
+      "jail": {
+        "title": "CÁRCEL",
+        "description": "Ve a la cárcel si sacas dobles 3 veces o caes en la casilla. Paga o saca dobles para salir."
+      },
+      "bankruptcy": {
+        "title": "BANCARROTA",
+        "description": "Si no puedes pagar, vendes propiedades. Sin nada que vender, quedas eliminado."
+      }
+    }
+  },
+  "newGame": {
+    "title": "NUEVA PARTIDA",
+    "players": "JUGADORES",
+    "player": "JUGADOR",
+    "namePlaceholder": "Nombre...",
+    "startingMoney": "DINERO INICIAL",
+    "back": "VOLVER",
+    "create": "CREAR",
+    "creating": "CREANDO...",
+    "errors": {
+      "invalidPlayers": "Todos los jugadores deben tener un nombre"
+    },
+    "colors": {
+      "red": "Rojo",
+      "blue": "Azul",
+      "green": "Verde",
+      "yellow": "Amarillo",
+      "orange": "Naranja",
+      "purple": "Morado",
+      "pink": "Rosa",
+      "cyan": "Cyan"
+    }
+  }
+}
