@@ -198,8 +198,12 @@ namespace monopoly_backend.Services
         {
             var game = await _context.Games
                 .Include(g => g.Players)
+                    .ThenInclude(p => p.Properties)
                 .Include(g => g.CurrentTurnPlayer)
                 .Include(g => g.Board)
+                    .ThenInclude(b => b!.Tiles)
+                        .ThenInclude(t => t.Property)
+                            .ThenInclude(p => p!.Owner)
                 .FirstOrDefaultAsync(g => g.Id == gameId);
 
             if (game == null)

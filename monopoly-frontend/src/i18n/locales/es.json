@@ -73,5 +73,13 @@
       "pink": "Rosa",
       "cyan": "Cyan"
     }
+  },
+  "board": {
+    "title": "MONOPOLY",
+    "players": "Jugadores",
+    "chance": "SUERTE",
+    "chanceLabel": "Chance",
+    "community": "CAJA",
+    "communityLabel": "Community"
   }
 }

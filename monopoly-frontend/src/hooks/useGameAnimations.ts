@@ -128,37 +128,38 @@ export const useDiceRoll = ({ duration = 1000 }: UseDiceRollProps = {}) => {
   const [dice1, setDice1] = useState(1);
   const [dice2, setDice2] = useState(1);
 
-  const rollDice = useCallback((): Promise<[number, number]> => {
+  // Animar los dados sin establecer valores finales (los valores finales vendrán del backend)
+  const rollDice = useCallback((): Promise<void> => {
     return new Promise((resolve) => {
       setIsRolling(true);
-      
-      // Animar los dados girando
+
+      // Animar los dados girando con valores aleatorios durante la animación
       let iterations = 0;
       const interval = setInterval(() => {
         setDice1(Math.floor(Math.random() * 6) + 1);
         setDice2(Math.floor(Math.random() * 6) + 1);
         iterations++;
-        
+
         if (iterations > duration / 50) {
           clearInterval(interval);
-          
-          const final1 = Math.floor(Math.random() * 6) + 1;
-          const final2 = Math.floor(Math.random() * 6) + 1;
-          
-          setDice1(final1);
-          setDice2(final2);
           setIsRolling(false);
-          
-          resolve([final1, final2]);
+          resolve();
         }
       }, 50);
     });
   }, [duration]);
 
+  // Función para establecer los valores finales desde el backend
+  const setFinalDiceValues = useCallback((d1: number, d2: number) => {
+    setDice1(d1);
+    setDice2(d2);
+  }, []);
+
   return {
     isRolling,
-    diceValues: [dice1, dice2],
+    diceValues: [dice1, dice2] as [number, number],
     rollDice,
+    setFinalDiceValues,
   };
 };
 

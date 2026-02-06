@@ -49,6 +49,13 @@
   --menu-button-hover: oklch(0.75 0.18 85);
   --menu-button-text: oklch(0.2 0.05 30);
   --menu-button-text-hover: oklch(0.15 0.02 30);
+    
+  /* Board colors - Light theme */
+  --board-bg: oklch(0.35 0.12 145);
+  --board-card: oklch(0.98 0.01 90);
+  --board-border: oklch(0.25 0.08 145);
+  --board-accent: oklch(0.75 0.18 85);
+  --board-text: oklch(0.2 0.05 30);
 }
 
 .dark {
@@ -97,6 +104,13 @@
   --menu-button-hover: oklch(0.7 0.18 85);
   --menu-button-text: oklch(0.2 0.05 30);
   --menu-button-text-hover: oklch(0.15 0.02 30);
+  
+  /* Board colors - Dark theme with wine/burgundy tones */
+  --board-bg: oklch(0.22 0.15 15);
+  --board-card: oklch(0.28 0.12 10);
+  --board-border: oklch(0.45 0.16 20);
+  --board-accent: oklch(0.6 0.18 30);
+  --board-text: oklch(0.92 0.02 90);
 }
 
 @theme inline {

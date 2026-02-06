@@ -73,5 +73,13 @@
       "pink": "Pink",
       "cyan": "Cyan"
     }
+  },
+  "board": {
+    "title": "MONOPOLY",
+    "players": "Players",
+    "chance": "CHANCE",
+    "chanceLabel": "Chance",
+    "community": "COMMUNITY",
+    "communityLabel": "Community"
   }
 }

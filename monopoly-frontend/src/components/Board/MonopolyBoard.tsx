@@ -1,5 +1,9 @@
+'use client';
+
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import { useSettings } from '../../contexts/SettingsContext';
 import type { PlayerDto, TileDto, PlayerPosition } from '../../types/game.types';
 
 // Mapeo de colores del backend a códigos hex
@@ -31,7 +35,9 @@ const MonopolyBoard: React.FC<MonopolyBoardProps> = ({
   currentPlayerId,
   onTileClick,
 }) => {
-  // Obtener la posición actual de un jugador (animada o estática)
+  const { t } = useTranslation();
+  const { theme } = useSettings();
+  
   const getPlayerPosition = (playerId: string): number => {
     if (playerPositions && playerPositions.length > 0) {
       const animatedPos = playerPositions.find(p => p.playerId === playerId);
@@ -45,14 +51,15 @@ const MonopolyBoard: React.FC<MonopolyBoardProps> = ({
   };
 
   // Organizar tiles por sección del tablero (40 casillas)
+  // El flujo del Monopoly es: 0(GO) → 1 → ... → 10(Jail) → 11 → ... → 20(Free Parking) → 21 → ... → 30 → 31 → ... → 39 → 0
   const sections = useMemo(() => {
     const sortedTiles = tiles.sort((a, b) => a.position - b.position);
 
     return {
-      bottom: sortedTiles.slice(0, 11),      // 0-10: GO a Jail (visiting)
-      left: sortedTiles.slice(11, 20),       // 11-19: Left side
-      top: sortedTiles.slice(20, 31).reverse(), // 20-30: Top side (reversed for display)
-      right: sortedTiles.slice(31, 40).reverse(), // 31-39: Right side (reversed)
+      bottom: sortedTiles.slice(0, 11).reverse(),  // 0-10: Invertido para que GO esté a la derecha
+      left: sortedTiles.slice(11, 20).reverse(),   // 11-19: Invertido para que 11 esté abajo
+      top: sortedTiles.slice(20, 31),              // 20-30: Sin invertir, 20 (Free Parking) a la izquierda
+      right: sortedTiles.slice(31, 40),            // 31-39: Sin invertir, 31 arriba y 39 abajo
     };
   }, [tiles]);
 
@@ -61,38 +68,26 @@ const MonopolyBoard: React.FC<MonopolyBoardProps> = ({
     return COLOR_MAP[colorGroup] || 'white';
   };
 
-//   const getTileTypeName = (type: number): string => {
-//     const types: Record<number, string> = {
-//       0: 'Go',
-//       1: 'Property',
-//       2: 'Community Chest',
-//       3: 'Income Tax',
-//       4: 'Railroad',
-//       5: 'Chance',
-//       6: 'Jail',
-//       7: 'Free Parking',
-//       8: 'Go to Jail',
-//       9: 'Luxury Tax',
-//       10: 'Utility',
-//     };
-//     return types[type] || 'Unknown';
-//   };
-
   const renderTile = (tile: TileDto, isVertical: boolean = false) => {
     // Filtrar jugadores usando la posición animada
     const playersOnTile = players.filter(p => getPlayerPosition(p.id) === tile.position);
     const tileColor = tile.property?.colorGroup ? getTileColor(tile.property.colorGroup) : 'white';
-    
+
     return (
       <motion.div
         key={tile.id}
         className={`
-          relative border-2 border-gray-800 bg-white cursor-pointer
+          relative border-2 cursor-pointer
           ${isVertical ? 'h-24 w-16' : 'h-16 w-24'}
           ${tile.type === 0 || tile.type === 6 || tile.type === 7 || tile.type === 8 ? 'h-24 w-24' : ''}
-          transition-all duration-200 hover:shadow-lg hover:z-10
-          ${currentPlayerId && playersOnTile.some(p => p.id === currentPlayerId) ? 'ring-4 ring-yellow-400 ring-offset-2' : ''}
+          transition-all duration-200 hover:shadow-[4px_4px_0px_rgba(0,0,0,0.3)] hover:z-10
+          ${currentPlayerId && playersOnTile.some(p => p.id === currentPlayerId) ? 'ring-4 ring-offset-2' : ''}
         `}
+        style={{
+          backgroundColor: theme === 'dark' ? 'oklch(0.28 0.12 10)' : 'var(--menu-card)',
+          borderColor: theme === 'dark' ? 'oklch(0.45 0.16 20)' : 'var(--menu-border)',
+          outlineColor: theme === 'dark' ? 'oklch(0.6 0.18 30)' : 'var(--menu-accent)',
+        }}
         whileHover={{ scale: 1.05 }}
         onClick={() => onTileClick?.(tile.id)}
       >
@@ -113,18 +108,19 @@ const MonopolyBoard: React.FC<MonopolyBoardProps> = ({
           ${isVertical ? 'pl-4' : 'pt-4'}
         `}>
           <span className={`
-            text-xs font-bold text-center line-clamp-2
+            font-mono text-xs font-bold text-center line-clamp-2
             ${tile.type === 0 || tile.type === 6 || tile.type === 7 || tile.type === 8 ? 'text-sm' : ''}
-          `}>
+          `}
+          style={{ color: theme === 'dark' ? 'oklch(0.92 0.02 90)' : 'var(--menu-button-text)' }}>
             {tile.name}
           </span>
           {tile.property?.price && (
-            <span className="text-[10px] text-gray-600 mt-1">
+            <span className="font-mono text-[10px] mt-1" style={{ color: theme === 'dark' ? 'oklch(0.7 0.02 90)' : 'var(--menu-button-text)' }}>
               ${tile.property.price}
             </span>
           )}
           {tile.property?.ownerId && (
-            <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500" />
+            <div className="absolute top-1 right-1 w-2 h-2 bg-menu-accent border border-menu-border" />
           )}
         </div>
 
@@ -154,7 +150,7 @@ const MonopolyBoard: React.FC<MonopolyBoardProps> = ({
                   className="relative group"
                 >
                   <div
-                    className="w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold cursor-pointer"
+                    className="w-6 h-6 border-2 border-menu-border shadow-[2px_2px_0px_rgba(0,0,0,0.2)] flex items-center justify-center text-white font-mono text-xs font-bold cursor-pointer"
                     style={{ backgroundColor: player.color }}
                     title={player.name}
                   >
@@ -163,7 +159,7 @@ const MonopolyBoard: React.FC<MonopolyBoardProps> = ({
 
                   {/* Tooltip with player info */}
                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-50">
-                    <div className="bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                    <div className="bg-menu-border text-menu-card font-mono text-xs py-1 px-2 whitespace-nowrap border-2 border-menu-border shadow-[2px_2px_0px_rgba(0,0,0,0.3)]">
                       <div className="font-bold">{player.name}</div>
                       <div>${player.money}</div>
                     </div>
@@ -178,10 +174,27 @@ const MonopolyBoard: React.FC<MonopolyBoardProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-center w-full bg-gradient-to-br from-green-50 to-green-100 p-8">
-      <div className="relative">
+    <div 
+      className="min-h-screen flex items-center justify-center w-full p-8 overflow-hidden relative"
+      style={{
+        backgroundColor: theme === 'dark' ? 'oklch(0.22 0.15 15)' : 'var(--menu-bg)',
+      }}
+    >
+      {/* Decorative pixel corners */}
+      <div className={`absolute top-4 left-4 w-8 h-8 border-t-4 border-l-4 ${theme === 'dark' ? 'border-[oklch(0.6_0.18_30)]' : 'border-menu-accent'}`} />
+      <div className={`absolute top-4 right-4 w-8 h-8 border-t-4 border-r-4 ${theme === 'dark' ? 'border-[oklch(0.6_0.18_30)]' : 'border-menu-accent'}`} />
+      <div className={`absolute bottom-4 left-4 w-8 h-8 border-b-4 border-l-4 ${theme === 'dark' ? 'border-[oklch(0.6_0.18_30)]' : 'border-menu-accent'}`} />
+      <div className={`absolute bottom-4 right-4 w-8 h-8 border-b-4 border-r-4 ${theme === 'dark' ? 'border-[oklch(0.6_0.18_30)]' : 'border-menu-accent'}`} />
+
+      <div className="relative z-10">
         {/* Main board */}
-        <div className="grid grid-cols-11 gap-0 bg-green-200 p-0 shadow-2xl rounded-lg">
+        <div 
+          className="grid grid-cols-11 gap-0 border-4 p-0 shadow-[8px_8px_0px_rgba(0,0,0,0.3)]"
+          style={{
+            backgroundColor: theme === 'dark' ? 'oklch(0.28 0.12 10)' : 'var(--menu-card)',
+            borderColor: theme === 'dark' ? 'oklch(0.45 0.16 20)' : 'var(--menu-border)',
+          }}
+        >
           {/* Top row */}
           <div className="col-span-11 grid grid-cols-11 gap-0">
             {sections.top.map(tile => renderTile(tile, false))}
@@ -195,51 +208,102 @@ const MonopolyBoard: React.FC<MonopolyBoardProps> = ({
             </div>
 
             {/* Board center */}
-            <div className="col-span-9 bg-gradient-to-br from-green-200 via-green-100 to-green-200 flex items-center justify-center relative p-4">
+            <div 
+              className="col-span-9 flex items-center justify-center relative p-4"
+              style={{
+                backgroundColor: theme === 'dark' ? 'oklch(0.28 0.12 10)' : 'var(--menu-card)',
+              }}
+            >
               <div className="text-center">
-                <h1 className="text-6xl font-bold text-green-800 mb-4 tracking-wider" style={{ fontFamily: 'serif' }}>
-                  MONOPOLY
+                <h1 
+                  className="font-mono text-5xl font-bold mb-4 tracking-wider drop-shadow-[4px_4px_0px_rgba(0,0,0,0.3)]"
+                  style={{ color: theme === 'dark' ? 'oklch(0.6 0.18 30)' : 'var(--menu-accent)' }}
+                >
+                  {t('board.title')}
                 </h1>
 
                 {/* Players info */}
-                <div className="mt-8 space-y-2 max-h-64 overflow-y-auto">
-                  <h2 className="text-xl font-bold text-gray-700 mb-4">Jugadores</h2>
+                <div className="mt-6 space-y-2 max-h-64">
+                  <h2 
+                    className="font-mono text-lg font-bold mb-3"
+                    style={{ color: theme === 'dark' ? 'oklch(0.92 0.02 90)' : 'var(--menu-button-text)' }}
+                  >{t('board.players')}</h2>
                   {players.map(player => (
                     <motion.div
                       key={player.id}
                       className={`
-                        flex items-center justify-between p-3 rounded-lg
-                        ${player.id === currentPlayerId ? 'bg-yellow-100 ring-2 ring-yellow-400' : 'bg-white'}
-                        shadow-md
+                        flex items-center justify-between p-3 border-4
                       `}
+                      style={{
+                        borderColor: theme === 'dark' ? 'oklch(0.45 0.16 20)' : 'var(--menu-border)',
+                        backgroundColor: player.id === currentPlayerId 
+                          ? (theme === 'dark' ? 'oklch(0.6 0.18 30)' : 'var(--menu-accent)')
+                          : (theme === 'dark' ? 'oklch(0.35 0.1 15)' : 'var(--menu-button)'),
+                        boxShadow: player.id === currentPlayerId 
+                          ? '4px 4px 0px rgba(0,0,0,0.3)' 
+                          : '2px 2px 0px rgba(0,0,0,0.2)',
+                      }}
                       animate={player.id === currentPlayerId ? {
-                        scale: [1, 1.05, 1],
+                        scale: [1, 1.02, 1],
                       } : {}}
                       transition={player.id === currentPlayerId ? { repeat: Infinity, duration: 1.5 } : {}}
                     >
                       <div className="flex items-center gap-3">
-                        <div
-                          className="w-8 h-8 rounded-full border-2 border-white shadow flex items-center justify-center text-white font-bold"
-                          style={{ backgroundColor: player.color }}
+                        
+                        <div className="w-8 h-8 border-2 shadow-[2px_2px_0px_rgba(0,0,0,0.2)] flex items-center justify-center text-white font-mono font-bold"
+                          style={{
+                            borderColor: theme === 'dark' ? 'oklch(0.45 0.16 20)' : 'var(--menu-border)',
+                            backgroundColor: player.color
+                          }}
                         >
                           {player.name[0].toUpperCase()}
                         </div>
-                        <span className="font-semibold text-sm">{player.name}</span>
+                        <span 
+                          className="font-mono font-semibold text-sm"
+                          style={{ color: theme === 'dark' ? 'oklch(0.92 0.02 90)' : 'var(--menu-button-text)' }}
+                        >{player.name}</span>
                       </div>
-                      <span className="font-bold text-green-600">${player.money}</span>
+                      <span 
+                        className="font-mono font-bold"
+                        style={{ color: theme === 'dark' ? 'oklch(0.92 0.02 90)' : 'var(--menu-border)' }}
+                      >${player.money}</span>
                     </motion.div>
                   ))}
                 </div>
 
                 {/* Card decks */}
-                <div className="grid grid-cols-2 gap-4 mt-8">
-                  <div className="bg-orange-500 p-4 rounded-lg shadow-lg text-white">
-                    <div className="text-sm font-bold">SUERTE</div>
-                    <div className="text-xs">Chance</div>
+                <div className="grid grid-cols-2 gap-4 mt-6">
+                  <div 
+                    className="border-4 p-4 shadow-[4px_4px_0px_rgba(0,0,0,0.3)]"
+                    style={{
+                      backgroundColor: theme === 'dark' ? 'oklch(0.6 0.18 30)' : 'var(--menu-accent)',
+                      borderColor: theme === 'dark' ? 'oklch(0.45 0.16 20)' : 'var(--menu-border)',
+                    }}
+                  >
+                    <div 
+                      className="font-mono text-sm font-bold"
+                      style={{ color: theme === 'dark' ? 'oklch(0.92 0.02 90)' : 'var(--menu-button-text)' }}
+                    >{t('board.chance')}</div>
+                    <div 
+                      className="font-mono text-xs"
+                      style={{ color: theme === 'dark' ? 'oklch(0.7 0.02 90)' : 'var(--menu-button-text)' }}
+                    >{t('board.chanceLabel')}</div>
                   </div>
-                  <div className="bg-blue-500 p-4 rounded-lg shadow-lg text-white">
-                    <div className="text-sm font-bold">CAJA</div>
-                    <div className="text-xs">Community</div>
+                  <div 
+                    className="border-4 p-4 shadow-[4px_4px_0px_rgba(0,0,0,0.3)]"
+                    style={{
+                      backgroundColor: theme === 'dark' ? 'oklch(0.35 0.1 15)' : 'var(--menu-button)',
+                      borderColor: theme === 'dark' ? 'oklch(0.45 0.16 20)' : 'var(--menu-border)',
+                    }}
+                  >
+                    <div 
+                      className="font-mono text-sm font-bold"
+                      style={{ color: theme === 'dark' ? 'oklch(0.92 0.02 90)' : 'var(--menu-button-text)' }}
+                    >{t('board.community')}</div>
+                    <div 
+                      className="font-mono text-xs"
+                      style={{ color: theme === 'dark' ? 'oklch(0.7 0.02 90)' : 'var(--menu-button-text)' }}
+                    >{t('board.communityLabel')}</div>
                   </div>
                 </div>
               </div>
@@ -256,6 +320,29 @@ const MonopolyBoard: React.FC<MonopolyBoardProps> = ({
             {sections.bottom.map(tile => renderTile(tile, false))}
           </div>
         </div>
+      </div>
+
+      {/* Background pattern */}
+      <div className="absolute inset-0 opacity-5 pointer-events-none">
+        <div
+          className="w-full h-full"
+          style={{
+            backgroundImage: `repeating-linear-gradient(
+              0deg,
+              transparent,
+              transparent 20px,
+              currentColor 20px,
+              currentColor 21px
+            ),
+            repeating-linear-gradient(
+              90deg,
+              transparent,
+              transparent 20px,
+              currentColor 20px,
+              currentColor 21px
+            )`,
+          }}
+        />
       </div>
     </div>
   );

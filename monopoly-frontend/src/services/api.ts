@@ -303,3 +303,37 @@ export async function endTurn(gameId: string, playerId: string): Promise<GameRes
     };
   }
 }
+
+// Función para pagar fianza de la cárcel ($50)
+export async function payJailFine(gameId: string, playerId: string): Promise<GameResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/game/${gameId}/pay-jail-fine?playerId=${playerId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.message || 'Error al pagar fianza',
+        errors: data.errors,
+      };
+    }
+
+    return {
+      success: true,
+      data: data.data,
+      message: data.message,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Error de conexión',
+    };
+  }
+}
