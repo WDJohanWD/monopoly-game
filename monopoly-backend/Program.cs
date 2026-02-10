@@ -16,8 +16,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<MonopolyDbContext>(options =>
 {
-    // Use in-memory database for development (temporary data)
-    options.UseInMemoryDatabase("MonopolyDb");
+    // Use SQL Server when a connection string is provided
+    options.UseSqlServer(connectionString);
 });
 
 // 🔹 Services
